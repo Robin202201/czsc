@@ -958,3 +958,7 @@ ID要强调当下分解的多样性？因为走势本身就是当下形成中的
 def print_one():
     k = random.choice(list(texts.keys()))
     print(texts[k].strip())
+
+
+if __name__ == "__main__":
+    print_one( )

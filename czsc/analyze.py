@@ -148,6 +148,7 @@ def check_bi(bars: List[NewBar], benchmark=None):
         return None, bars
 
 
+
 class CZSC:
     def __init__(self,
                  bars: List[RawBar],
