@@ -210,6 +210,16 @@ class TsDataCache:
         file_cache = os.path.join(cache_path, f"ths_daily_{ts_code}_sdt{self.sdt}.feather")
 
         # 优先读取缓存
+        """
+        这段代码的功能是用于检查是否存在本地缓存文件以及读取缓存文件。如果存在缓存文件并且`refresh`标志位为假，那么会通过`pd.read_feather()`方法读取缓存文件中的数据。在读取完成后，如果`self.verbose`为真，则会打印一条信息，表示已经读取了缓存文件。 
+        具体解释如下：
+        
+        - `not self.refresh`：`refresh`是一个标志位，用于决定是否重新获取数据而不使用缓存。如果`refresh`为假（即不需要重新获取数据），则执行下面的代码。
+        - `os.path.exists(file_cache)`：`os.path.exists()`函数用于检查指定路径的文件是否存在。`file_cache`是一个文件路径的字符串变量。如果缓存文件存在，返回为真，则执行下面的代码。
+        - `pd.read_feather(file_cache)`：`pd.read_feather()`函数用于从Feather格式的文件中读取数据，并将其返回为Pandas DataFrame对象。`file_cache`为要读取的缓存文件路径。将读取的数据赋值给`kline`变量。
+        - `self.verbose`：`self.verbose`是一个标志位，用于决定是否打印详细信息。如果`self.verbose`为真，则执行下面的代码。
+        - `print(f"ths_daily: read cache {file_cache}")`：打印一条带有缓存文件路径信息的消息。`file_cache`是缓存文件的路径字符串。打印的消息表示已经成功读取了缓存文件。
+        """
         if not self.refresh and os.path.exists(file_cache):
             kline = pd.read_feather(file_cache)
             if self.verbose:
@@ -217,6 +227,12 @@ class TsDataCache:
 
         else:
             # 调用接口拉取数据
+            """
+            这段代码主要是用于打印调试信息并调用一个叫做`ths_daily`的方法。
+            首先，`self.verbose`是一个布尔类型的属性，用于控制是否打印调试信息。如果`self.verbose`为`True`，则执行下面的代码。
+            然后，`print(f"ths_daily: refresh {file_cache}")`用于在控制台打印一条调试信息，其中`file_cache`是一个变量或者属性的值。
+            最后，代码调用了一个叫做`ths_daily`的方法，并传递了一些参数：`ts_code`、`start_date`、`end_date`和`fields`。根据代码的上下文，这个方法可能是一个API或者函数的调用，用于获取某个股票的每日交易数据（例如开盘价、收盘价、最高价、最低价、成交量等）。
+            """
             if self.verbose:
                 print(f"ths_daily: refresh {file_cache}")
             kline = pro.ths_daily(ts_code=ts_code, start_date=self.sdt, end_date=self.edt,
@@ -237,6 +253,12 @@ class TsDataCache:
         kline['trade_date'] = pd.to_datetime(kline['trade_date'], format=self.date_fmt)
 
         # 过滤时间范围
+        """
+        这段代码是一个条件语句，根据给定的起始日期和结束日期筛选DataFrame对象kline的数据。
+        首先，如果存在起始日期start_date，那么使用pd.to_datetime将start_date转换为日期时间格式，并将这个日期时间与kline['trade_date']进行比较。这一行代码的作用是筛选出trade_date大于等于起始日期的数据行。然后，将筛选后的结果重新赋值给kline。
+        接下来，如果存在结束日期end_date，那么类似地，将end_date转换为日期时间格式，并将这个日期时间与kline['trade_date']进行比较。这一行代码的作用是筛选出trade_date小于等于结束日期的数据行。然后，将筛选后的结果重新赋值给kline。
+        最终，kline将只包含trade_date在起始日期和结束日期之间的数据行。
+        """
         if start_date:
             kline = kline[kline['trade_date'] >= pd.to_datetime(start_date)]
         if end_date:
@@ -250,6 +272,12 @@ class TsDataCache:
             kline = format_kline(kline, freq=Freq.D)
 
         return kline
+
+
+
+
+
+
 
     def ths_index(self, exchange="A", type_="N"):
         """
@@ -413,6 +441,19 @@ class TsDataCache:
 
         else:
             # 分批拉取数据
+            """
+            这段代码的作用是获取一个时间范围内的K线数据。
+            
+            首先，代码定义了一个空列表klines来存储获取到的K线数据。
+            然后，将输入的开始时间self.sdt和结束时间self.edt转换成datetime格式的对象，分别赋值给变量end_dt和dt1。
+            接下来，根据传入的频率freq，计算一个时间间隔delta。频率是以分钟为单位的字符串，通过使用replace函数去掉字符串中的"min"，再乘以20转换为int类型，用于计算20倍的分钟数。
+            然后，计算dt1加上delta后的时间，赋值给dt2。
+            接下来，进入一个循环，循环条件为dt1小于end_dt。在循环体内部，调用ts.pro_bar()方法获取指定ts_code、asset、freq、start_date和end_date的K线数据，并将返回的DataFrame对象添加到klines列表中。
+            然后，更新dt1的值为dt2，dt2的值为dt1加上delta，进入下一次循环。
+            如果self.verbose为True，输出一条打印信息，显示当前获取K线数据的相关信息，如ts_code、asset、freq、dt1、dt2和该次获取到的K线数据长度len(df)。
+            最后，循环结束后，klines列表中存储了所有获取到的K线数据。
+            """
+
             klines = []
             end_dt = pd.to_datetime(self.edt)
             dt1 = pd.to_datetime(self.sdt)
