@@ -49,8 +49,11 @@ class TushareProApi: # 定义TushareProApi类
         """
         Parameters
         ----------
-        token: str
-            API接口TOKEN,用于用户认证
+        token: str，   API接口TOKEN,用于用户认证
+          这段代码是一个类的初始化方法（`__init__()`），在创建类的实例时被调用。该方法有两个参数：`token`和`timeout`（默认值为30）。
+        `token`参数是一个字符串类型的参数，用于API接口的认证。在初始化方法中，`token`被赋值给了类的私有属性`__token`。
+        `timeout`参数也是一个整数类型的参数，用于设置超时时间。在初始化方法中，`timeout`被赋值给了类的私有属性`__timeout`。
+        私有属性通常用双下划线开头（例如`__token`和`__timeout`），表示它们是类的内部使用的属性，不应该被类外部访问。
         """
         self.__token = token # 设置token属性
         self.__timeout = timeout # 设置timeout属性
@@ -80,6 +83,36 @@ class TushareProApi: # 定义TushareProApi类
             return pd.DataFrame(items, columns=columns) # 返回DataFrame
         else:
             return pd.DataFrame()
+    """
+    这部分代码是一个类的方法，用于查询数据。
+    首先，代码检查提供的`api_name`是否是特殊方法`__getstate__`或`__setstate__`，如果是，则返回一个空的`pd.DataFrame()`对象。
+    接下来，代码构造请求参数`req_params`：
+    - `api_name`是要调用的API名称
+    - `token`是访问API所需的令牌
+    - `params`是其他可选的请求参数
+    - `fields`是要返回的字段
+    然后，代码使用`requests.post()`方法发送POST请求到指定的url`self.__http_url`，并将请求参数以JSON格式传递。
+    如果请求成功（`res`有值），代码将返回结果解析为JSON对象，并检查`result['code']`是否为0。如果不是0，则使用日志记录错误，并抛出异常，异常消息为`result['msg']`。
+    如果请求成功且`result['code']`为0，代码将提取返回结果中的数据，并将其转换为`pd.DataFrame`对象。返回的DataFrame将由`data['items']`中的行和`data['fields']`中的列组成。
+    如果请求失败（`res`为空），代码将返回一个空的`pd.DataFrame()`对象。
+    """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def __getattr__(self, name):
         return partial(self.query, name) # 通过偏函数调用query方法
@@ -99,6 +132,13 @@ def format_kline(kline: pd.DataFrame, freq: Freq) -> List[RawBar]:
     :param kline: Tushare 数据接口返回的K线数据
     :param freq: K线周期
     :return: 转换好的K线数据
+    这段代码是用来将Tushare返回的K线数据转换为自定义的K线数据格式。该函数的参数包括一个Tushare返回的K线数据（kline）和K线周期（freq），返回值是转换后的K线数据列表（bars）。
+    首先，函数定义了一个空的列表bars，用来存储转换后的K线数据。
+    然后，根据K线周期的不同，确定使用哪个字段作为时间键。如果K线周期中包含"分钟"，则使用"trade_time"作为时间键；否则，使用"trade_date"作为时间键。
+    接下来，对传入的kline数据按照时间键进行降序排序，并将排序后的数据转换为字典格式。
+    然后，使用for循环遍历排序后的数据，并逐条进行转换。根据不同的K线周期，需要将成交量和成交额做一些转换。如果K线周期是日线（Freq.D），需要将成交量乘以100，将成交额乘以1000；否则，不进行转换。
+    在每一次循环中，将每条K线数据转换成自定义的RawBar对象，并将其添加到bars列表中。
+     最后，返回转换后的K线数据列表bars。
     """
     bars = []
     dt_key = 'trade_time' if '分钟' in freq.value else 'trade_date'  # 不同周期取不同的时间键
@@ -141,6 +181,22 @@ def get_kline(ts_code: str,
     :param end_date:
     :param fq:
     :return:
+    这段代码是一个获取K线数据的函数。
+
+    首先，函数的参数说明如下：
+    - ts_code: 股票代码
+    - start_date: K线数据的起始日期，可以是datetime对象或者字符串形式的日期
+    - end_date: K线数据的结束日期，同样可以是datetime对象或字符串形式的日期
+    - asset: 数据源，默认为'E'，表示股票
+    - freq: 数据类型，默认为Freq.F1，表示日线数据
+    - fq: 复权类型，默认为"qfq"，表示前复权
+
+    接下来，代码将start_date和end_date转换为datetime对象。
+    如果freq中包含"分钟"，则将start_date和end_date转换为字符串形式的时间，否则转换为字符串形式的日期。
+    然后，代码调用ts.pro_bar函数获取K线数据，传入的参数包括ts_code、fq、asset、freq等。
+    接着，代码调用format_kline函数对获取到的K线数据进行格式化。
+    最后，代码进行一些判断和打印输出。如果获取到的K线数据非空且最后一根K线的日期小于end_date，并且获取到的K线数量等于8000，打印一条消息。
+    最后返回获取到的K线数据。
     """
     start_date = pd.to_datetime(start_date)  # 转换为datetime
     end_date = pd.to_datetime(end_date)
